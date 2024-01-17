@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 use fixed::types::I80F48;
+use crate::errors::FundManagementError;
+use crate::instructions::{FundAdministratorAccount, PortfolioManagerAccount};
 
 #[account]
 pub struct Fund {
@@ -11,8 +13,23 @@ pub struct Fund {
     pub last_valuation: I80F48,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+impl Fund {
+    pub fn open(&mut self, fund_administrator: Pubkey, portfolio_manager: Pubkey) -> Result<()> {
+        require!(self.state == FundState::Uninitialized, FundManagementError::FundIsAlreadyInitialized);
+
+        self.fund_administrator = fund_administrator;
+        self.portfolio_manager = portfolio_manager;
+        self.state = FundState::Open;
+        self.last_valuation = I80F48::from(0);
+        self.last_valuation_ts = Clock::get()?.unix_timestamp.try_into().unwrap();
+
+        Ok(())
+    }
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, Debug)]
 pub enum FundState {
+    Uninitialized,
     Open,
     Close,
 }

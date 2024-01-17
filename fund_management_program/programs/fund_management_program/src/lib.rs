@@ -4,6 +4,7 @@ use instructions::*;
 
 pub mod instructions;
 mod state;
+mod errors;
 
 declare_id!("EhHV9Fttbudzu9ARRMgWKJqRV4nFY2bTSb4pQYymE92M");
 
@@ -11,8 +12,8 @@ declare_id!("EhHV9Fttbudzu9ARRMgWKJqRV4nFY2bTSb4pQYymE92M");
 pub mod fund_management_program {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        Ok(())
+    pub fn initialize(ctx: Context<Initialize>, portfolio_manager: Pubkey) -> Result<()> {
+        initialize(ctx, portfolio_manager)
     }
 
     // Investor deposit fund / will get a new minted token
@@ -34,7 +35,7 @@ pub mod fund_management_program {
 
     // Send fund to investors who make a withdrawal request
     pub fn fund_administrator_handle_redemption(ctx: Context<FundAdministratorAccount>) -> Result<()> { handle_redemptions(ctx) }
-}
 
-#[derive(Accounts)]
-pub struct Initialize {}
+    // Close fund (no more investment possible)
+    pub fn fund_administrator_close_fund(ctx: Context<FundAdministratorAccount>) -> Result<()> { close(ctx) }
+}
