@@ -11,6 +11,8 @@ pub struct Fund {
     pub state: FundState,
     pub last_valuation_ts: u64,
     pub last_valuation: I80F48,
+
+    // TODO List of pending redemptions
 }
 
 impl Fund {

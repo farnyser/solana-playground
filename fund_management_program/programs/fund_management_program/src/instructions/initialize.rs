@@ -3,7 +3,7 @@ use crate::instructions::InvestorAccount;
 use crate::state::Fund;
 
 pub fn initialize(ctx: Context<Initialize>, portfolio_manager: Pubkey) -> anchor_lang::Result<()> {
-    ctx.accounts.fund.open(ctx.accounts.administrator.key(), portfolio_manager);
+    ctx.accounts.fund.open(ctx.accounts.administrator.key(), portfolio_manager)?;
     Ok(())
 }
 
