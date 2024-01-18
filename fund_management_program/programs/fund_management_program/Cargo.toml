@@ -1,8 +1,9 @@
 [package]
 name = "fund_management_program"
 version = "0.1.0"
-description = "Created with Anchor"
 edition = "2021"
+authors = ["Serge FARNY <serge.farny@gmail.com>"]
+description = "Fund management program"
 
 [lib]
 crate-type = ["cdylib", "lib"]

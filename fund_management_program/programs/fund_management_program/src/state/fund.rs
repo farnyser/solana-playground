@@ -12,7 +12,7 @@ pub struct Fund {
     pub last_valuation_ts: u64,
     pub last_valuation: I80F48,
 
-    // TODO List of pending redemptions
+    pub pending_redemptions_counter: u64
 }
 
 impl Fund {
@@ -24,6 +24,7 @@ impl Fund {
         self.state = FundState::Open;
         self.last_valuation = I80F48::from(0);
         self.last_valuation_ts = Clock::get()?.unix_timestamp.try_into().unwrap();
+        self.pending_redemptions_counter = 0;
 
         Ok(())
     }

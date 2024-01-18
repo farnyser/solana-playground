@@ -1,52 +1,58 @@
 use std::error::Error;
 use std::str::FromStr;
-use solana_client::rpc_client::RpcClient;
-use solana_program::native_token::LAMPORTS_PER_SOL;
-use solana_program::pubkey::Pubkey;
 use borsh::{BorshSerialize, BorshDeserialize};
-use solana_sdk::{
-    instruction::Instruction,
-    program_pack::Pack,
-    signer::{keypair::Keypair, Signer},
-    transaction::Transaction,
-};
+use solana_sdk::{instruction::Instruction, program_pack::Pack, signer::{keypair::Keypair, Signer}, system_program, transaction::Transaction};
 use solana_sdk::signature::Signature;
-
-pub fn request_air_drop(rpc_client: &RpcClient, pub_key: &Pubkey, amount_sol: u64) -> Result<Signature, Box<dyn Error>> {
-    let sig = rpc_client.request_airdrop(pub_key, (amount_sol * LAMPORTS_PER_SOL) as u64)?;
-    loop {
-        let confirmed = rpc_client.confirm_transaction(&sig)?;
-        if confirmed {
-            break;
-        }
-    }
-    Ok(sig)
-}
-
-pub fn check_balance(rpc_client: &RpcClient, public_key: &Pubkey) -> Result<f64, Box<dyn Error>> {
-    Ok(rpc_client.get_balance(&public_key)? as f64 / LAMPORTS_PER_SOL as f64)
-}
+use anchor_client::{Client, Cluster};
+use std::ops::Deref;
+use anyhow::Result;
+use solana_sdk::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize)]
 pub struct HelloWorldInstruction {
 }
 
-pub fn call_hello_world(rpc_client: &RpcClient, signer_wallet: &Keypair) -> Result<Signature, Box<dyn Error>> {
-    let PROGRAM_ID = Pubkey::from_str("AbgXXgpcoDX8PUrNWUhR3xcUgQ1x9wdHBfKFMKZ67NrU")?;
-    let instruction_data = HelloWorldInstruction {};
-    let mut instruction_data_in_bytes: Vec<u8> = Vec::new();
-    instruction_data.serialize(&mut instruction_data_in_bytes)?;
-    let instruction = Instruction::new_with_bytes(PROGRAM_ID,
-                                                  &instruction_data_in_bytes,
-                                                  vec![]);
 
-    let recent_blockhash = rpc_client.get_latest_blockhash()?;
+pub fn create_new_fund<C: Deref<Target = impl Signer> + Clone>(
+    client: &Client<C>,
+    signer_wallet: &Keypair,
+    portfolio_manager: &Pubkey
+) -> Result<Signature> {
+    let program = client.program(fund_management_program::ID)?;
 
-    let  transaction =  Transaction::new_signed_with_payer(&[instruction],
-                                                           Some(&signer_wallet.pubkey()),
-                                                           &[signer_wallet, signer_wallet],
-                                                           recent_blockhash);
+    let fund = Keypair::new();
 
-    let sig = rpc_client.send_transaction(&transaction)?;
+    // Build and send a transaction.
+    let sig = program
+        .request()
+        .signer(&signer_wallet)
+        .signer(&fund)
+        .accounts(fund_management_program::accounts::Initialize {
+            fund: fund.pubkey(),
+            administrator: signer_wallet.pubkey(),
+            system_program: system_program::ID,
+        })
+        .args(fund_management_program::instruction::Initialize {
+            portfolio_manager: *portfolio_manager
+        })
+        .send()?;
+
     Ok(sig)
+
+    // let instruction_data = HelloWorldInstruction {};
+    // let mut instruction_data_in_bytes: Vec<u8> = Vec::new();
+    // instruction_data.serialize(&mut instruction_data_in_bytes)?;
+    // let instruction = Instruction::new_with_bytes(fund_management_program::ID,
+    //                                               &instruction_data_in_bytes,
+    //                                               vec![]);
+    //
+    // let recent_blockhash = rpc_client.get_latest_blockhash()?;
+    //
+    // let  transaction =  Transaction::new_signed_with_payer(&[instruction],
+    //                                                        Some(&signer_wallet.pubkey()),
+    //                                                        &[signer_wallet, signer_wallet],
+    //                                                        recent_blockhash);
+    //
+    // let sig = rpc_client.send_transaction(&transaction)?;
+    // Ok(sig)
 }

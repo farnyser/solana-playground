@@ -13,7 +13,7 @@ pub mod fund_management_program {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>, portfolio_manager: Pubkey) -> Result<()> {
-        initialize(ctx, portfolio_manager)
+        instructions::initialize(ctx, portfolio_manager)
     }
 
     // Investor deposit fund / will get a new minted token
