@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "programs/*",
-    "app/cli_client/"
+    "app/fund_management_client/"
 ]
 
 [profile.release]
