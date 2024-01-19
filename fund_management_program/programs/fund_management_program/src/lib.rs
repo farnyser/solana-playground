@@ -3,8 +3,8 @@ use fixed::types::I80F48;
 use instructions::*;
 
 pub mod instructions;
-mod state;
-mod errors;
+pub mod state;
+pub mod errors;
 
 declare_id!("EhHV9Fttbudzu9ARRMgWKJqRV4nFY2bTSb4pQYymE92M");
 

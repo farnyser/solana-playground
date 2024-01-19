@@ -4,7 +4,7 @@ use anchor_client::{Client, Cluster};
 use std::path::Path;
 use std::rc::Rc;
 use std::str::FromStr;
-use fund_management_client::{create_new_fund};
+use fund_management_client::{*};
 use solana_sdk::signer::EncodableKey;
 use solana_sdk::commitment_config::CommitmentConfig;
 use clap::{arg, Parser, Command, Subcommand};
@@ -28,6 +28,13 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Get fund info
+    #[command(arg_required_else_help = true)]
+    FundInfo {
+        /// The fund pubkey
+        #[arg(value_parser = clap::value_parser!(model::pubkey_cli::PubkeyCli))]
+        fund: model::pubkey_cli::PubkeyCli,
+    },
     /// Create a new fund
     #[command(arg_required_else_help = true)]
     CreateFund {
@@ -42,7 +49,23 @@ enum Commands {
         fund: model::pubkey_cli::PubkeyCli,
         /// The net asset valuation
         nav: f64,
-    }
+    },
+    /// Deposit asset into the fund vault
+    Deposit {
+        /// The fund pubkey
+        #[arg(value_parser = clap::value_parser!(model::pubkey_cli::PubkeyCli))]
+        fund: model::pubkey_cli::PubkeyCli,
+        /// Amount to deposit (in fund base ccy)
+        amount: f64,
+    },
+    /// Withdraw asset from the fund vault
+    Withdraw {
+        /// The fund pubkey
+        #[arg(value_parser = clap::value_parser!(model::pubkey_cli::PubkeyCli))]
+        fund: model::pubkey_cli::PubkeyCli,
+        /// Amount to withdraw (in fund base ccy)
+        amount: f64,
+    },
 }
 
 
@@ -55,14 +78,24 @@ fn main() {
     let client = Client::new_with_options(url.clone(), payer.clone(), CommitmentConfig::processed());
 
     let sig = match args.command {
+        Commands::FundInfo { fund } => {
+            println!(
+                "Getting fund info for {}",
+                fund.0
+            );
+
+            let fund = get_fund_info(&client, fund.0).unwrap();
+            println!(" NAV: {}", fund.last_valuation);
+            println!(" STATE: {:?}", fund.state);
+            Result::<Signature>::Err(Error::msg("TODO"))
+        },
         Commands::CreateFund { portfolio_manager } => {
             println!(
                 "Creating fund with pm={}",
                 portfolio_manager.0
             );
 
-            //create_new_fund(&client, &payer, &portfolio_manager.0)
-            Result::<Signature>::Err(Error::msg("TODO"))
+            create_new_fund(&client, &payer, &portfolio_manager.0)
         },
         Commands::SetNav { fund, nav } => {
             println!(
@@ -70,14 +103,17 @@ fn main() {
                 fund.0,
                 nav
             );
+            set_fund_nav(&client, &payer, fund.0, nav)
+        },
+        Commands::Deposit { fund, amount } => {
             Result::<Signature>::Err(Error::msg("TODO"))
-        }
+        },
+        Commands::Withdraw { fund, amount } => {
+            Result::<Signature>::Err(Error::msg("TODO"))
+        },
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable!()
     };
 
-    // println!("Creating fund...");
-    // let sig = create_new_fund(&client, &payer, &payer.pubkey());
-    //
     match sig {
         Ok(hash) => println!("-> {} !", hash),
         Err(err) => println!("ERROR {} !", err),
