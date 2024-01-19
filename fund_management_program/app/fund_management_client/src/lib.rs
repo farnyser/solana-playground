@@ -3,6 +3,7 @@ use solana_sdk::signature::Signature;
 use anchor_client::{Client, Cluster};
 use std::ops::Deref;
 use anchor_client::anchor_lang::Key;
+use anchor_client::solana_client::rpc_config::RpcSendTransactionConfig;
 use anyhow::Result;
 use solana_sdk::pubkey::Pubkey;
 use fixed::types::I80F48;
@@ -118,7 +119,10 @@ pub fn withdraw_from_fund<C: Deref<Target = impl Signer> + Clone>(
         .args(fund_management_program::instruction::PortfolioManagerWithdraw {
             amount: amount
         })
-        .send()?;
+        .send_with_spinner_and_config(RpcSendTransactionConfig{
+            skip_preflight: true,
+            ..RpcSendTransactionConfig::default()
+        })?;
 
     Ok(sig)
 }

@@ -42,12 +42,14 @@ pub fn withdraw(ctx: Context<crate::PortfolioManagerAccount>, amount: u64) -> Re
     let to_account = &ctx.accounts.manager;
 
     // Find bump
-    let (_, bump) = Pubkey::find_program_address(
+    let (f1, bump) = Pubkey::find_program_address(
         &[ctx.accounts.fund.fund_administrator.as_ref(),
             ctx.accounts.fund.portfolio_manager.as_ref()],
         &crate::ID
     );
 
+    msg!("ctx.accounts.fund is {}", ctx.accounts.fund.key());
+    msg!("f1 is {}", f1);
     msg!("bump is {}", bump);
 
     // Create the transfer instruction
