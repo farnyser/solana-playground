@@ -25,18 +25,15 @@ pub fn create_new_fund<C: Deref<Target = impl Signer> + Clone>(
 ) -> Result<Signature> {
     let program = client.program(fund_management_program::ID)?;
 
-    let (fund, bump) = Pubkey::find_program_address(
-        &[signer_wallet.pubkey().as_ref(),
-        portfolio_manager.as_ref()],
-        &fund_management_program::ID
-    );
+    let fund = Keypair::new();
 
     // Build and send a transaction.
     let sig = program
         .request()
         .signer(&signer_wallet)
+        .signer(&fund)
         .accounts(fund_management_program::accounts::Initialize {
-            fund: fund.key(),
+            fund: fund.pubkey(),
             administrator: signer_wallet.pubkey(),
             system_program: system_program::ID,
         })
@@ -81,6 +78,7 @@ pub fn deposit_into_fund<C: Deref<Target = impl Signer> + Clone>(
     amount: u64
 ) -> Result<Signature> {
     let program = client.program(fund_management_program::ID)?;
+    let fund_info = get_fund_info(client, fund)?;
 
     // Build and send a transaction.
     let sig = program
@@ -88,13 +86,17 @@ pub fn deposit_into_fund<C: Deref<Target = impl Signer> + Clone>(
         .signer(&signer_wallet)
         .accounts(fund_management_program::accounts::PortfolioManagerAccount {
             fund: fund,
+            vault: fund_info.fund_vault,
             manager: signer_wallet.pubkey(),
             system_program: system_program::ID
         })
         .args(fund_management_program::instruction::PortfolioManagerDeposit {
             amount: amount
         })
-        .send()?;
+        .send_with_spinner_and_config(RpcSendTransactionConfig{
+            skip_preflight: true,
+            ..RpcSendTransactionConfig::default()
+        })?;
 
     Ok(sig)
 }
@@ -106,6 +108,7 @@ pub fn withdraw_from_fund<C: Deref<Target = impl Signer> + Clone>(
     amount: u64
 ) -> Result<Signature> {
     let program = client.program(fund_management_program::ID)?;
+    let fund_info = get_fund_info(client, fund)?;
 
     // Build and send a transaction.
     let sig = program
@@ -113,6 +116,7 @@ pub fn withdraw_from_fund<C: Deref<Target = impl Signer> + Clone>(
         .signer(&signer_wallet)
         .accounts(fund_management_program::accounts::PortfolioManagerAccount {
             fund: fund,
+            vault: fund_info.fund_vault,
             manager: signer_wallet.pubkey(),
             system_program: system_program::ID
         })

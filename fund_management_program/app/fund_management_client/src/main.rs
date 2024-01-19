@@ -87,6 +87,8 @@ fn main() {
             let fund = get_fund_info(&client, fund.0).unwrap();
             println!(" NAV: {}", fund.last_valuation);
             println!(" STATE: {:?}", fund.state);
+            println!(" PM: {:?}", fund.portfolio_manager);
+            println!(" ADMIN: {:?}", fund.fund_administrator);
             Result::<Signature>::Err(Error::msg("TODO"))
         },
         Commands::CreateFund { portfolio_manager } => {

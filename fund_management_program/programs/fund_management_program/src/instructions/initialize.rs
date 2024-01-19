@@ -2,25 +2,30 @@ use anchor_lang::prelude::*;
 use crate::state::Fund;
 
 pub fn initialize(ctx: Context<Initialize>, portfolio_manager: Pubkey) -> Result<()> {
-    ctx.accounts.fund.open(ctx.accounts.administrator.key(), portfolio_manager)?;
+    let (fund_vault, bump) = Pubkey::find_program_address(
+        &[ctx.accounts.fund.key().as_ref()],
+        &crate::ID);
 
-    msg!("Fund initialized with admin: {} and pm: {} (bump={})",
+    ctx.accounts.fund.open(ctx.accounts.administrator.key(), portfolio_manager, fund_vault, bump)?;
+
+    msg!("Fund {} initialized with admin: {} and pm: {}",
+        ctx.accounts.fund.key(),
         ctx.accounts.administrator.key,
-        portfolio_manager,
-        ctx.bumps.fund);
+        portfolio_manager
+    );
+    msg!("Vault -> {}",
+        fund_vault
+    );
 
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(portfolio_manager: Pubkey)]
 pub struct Initialize<'info> {
     #[account(
         init,
         payer = administrator,
-        seeds = [administrator.key().as_ref(), portfolio_manager.as_ref()],
-        bump,
-        space = 8 + (32 + 32 + 1 + 8 + 16 + 8)
+        space = 8 + (32 + 32 + 32 + 1 + 1 + 8 + 16 + 8)
     )]
     pub fund: Account<'info, Fund>,
     #[account(mut)]

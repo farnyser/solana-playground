@@ -8,8 +8,8 @@ use crate::state::{Fund, FundState};
 pub fn deposit(ctx: Context<crate::PortfolioManagerAccount>, amount: u64) -> Result<()> {
     require!(ctx.accounts.manager.is_signer, FundManagementError::InvalidPermission);
 
-    let to_account =  &ctx.accounts.fund;
     let from_account = &ctx.accounts.manager;
+    let to_account =  &ctx.accounts.vault;
 
     // Create the transfer instruction
     let transfer_instruction = system_instruction::transfer(&from_account.key,
@@ -27,9 +27,10 @@ pub fn deposit(ctx: Context<crate::PortfolioManagerAccount>, amount: u64) -> Res
         &[],
     )?;
 
-    msg!("Deposited {} into fund: {}",
+    msg!("Deposited {} into fund: {} (vault={})",
         amount,
-        to_account.key());
+        ctx.accounts.fund.key(),
+        ctx.accounts.fund.fund_vault.key());
 
     Ok(())
 }
@@ -38,19 +39,8 @@ pub fn withdraw(ctx: Context<crate::PortfolioManagerAccount>, amount: u64) -> Re
     require!(ctx.accounts.manager.is_signer, FundManagementError::InvalidPermission);
     require!(ctx.accounts.fund.state == FundState::Open, FundManagementError::FundIsNotOpen);
 
-    let from_account =  &ctx.accounts.fund;
+    let from_account =  &ctx.accounts.vault;
     let to_account = &ctx.accounts.manager;
-
-    // Find bump
-    let (f1, bump) = Pubkey::find_program_address(
-        &[ctx.accounts.fund.fund_administrator.as_ref(),
-            ctx.accounts.fund.portfolio_manager.as_ref()],
-        &crate::ID
-    );
-
-    msg!("ctx.accounts.fund is {}", ctx.accounts.fund.key());
-    msg!("f1 is {}", f1);
-    msg!("bump is {}", bump);
 
     // Create the transfer instruction
     let transfer_instruction = system_instruction::transfer(&from_account.key(),
@@ -66,15 +56,15 @@ pub fn withdraw(ctx: Context<crate::PortfolioManagerAccount>, amount: u64) -> Re
             ctx.accounts.system_program.to_account_info(),
         ],
         &[&[
-            ctx.accounts.fund.fund_administrator.as_ref(),
-            ctx.accounts.manager.key().as_ref(),
-            &[bump]
+            ctx.accounts.fund.key().as_ref(),
+            &[ctx.accounts.fund.fund_vault_bump]
         ]],
     )?;
 
-    msg!("Withdrawn {} from fund: {}",
+    msg!("Withdrawn {} from fund: {} (vault={})",
         amount,
-        from_account.key());
+        ctx.accounts.fund.key(),
+        ctx.accounts.fund.fund_vault.key());
 
     Ok(())
 }
@@ -84,5 +74,8 @@ pub struct PortfolioManagerAccount<'info> {
     #[account(mut)]
     pub fund: Account<'info, Fund>,
     pub manager: Signer<'info>,
+    /// CHECK: Only used to store SOL - TODO FAS is that safe ?
+    #[account(mut)]
+    pub vault: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
