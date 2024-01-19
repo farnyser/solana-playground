@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::solana_program::system_instruction;
@@ -40,6 +41,15 @@ pub fn withdraw(ctx: Context<crate::PortfolioManagerAccount>, amount: u64) -> Re
     let from_account =  &ctx.accounts.fund;
     let to_account = &ctx.accounts.manager;
 
+    // Find bump
+    let (_, bump) = Pubkey::find_program_address(
+        &[ctx.accounts.fund.fund_administrator.as_ref(),
+            ctx.accounts.fund.portfolio_manager.as_ref()],
+        &crate::ID
+    );
+
+    msg!("bump is {}", bump);
+
     // Create the transfer instruction
     let transfer_instruction = system_instruction::transfer(&from_account.key(),
                                                             to_account.key,
@@ -53,7 +63,11 @@ pub fn withdraw(ctx: Context<crate::PortfolioManagerAccount>, amount: u64) -> Re
             to_account.to_account_info(),
             ctx.accounts.system_program.to_account_info(),
         ],
-        &[],
+        &[&[
+            ctx.accounts.fund.fund_administrator.as_ref(),
+            ctx.accounts.manager.key().as_ref(),
+            &[bump]
+        ]],
     )?;
 
     msg!("Withdrawn {} from fund: {}",

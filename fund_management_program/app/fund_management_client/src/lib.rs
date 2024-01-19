@@ -2,6 +2,7 @@ use solana_sdk::{signer::{keypair::Keypair, Signer}, system_program};
 use solana_sdk::signature::Signature;
 use anchor_client::{Client, Cluster};
 use std::ops::Deref;
+use anchor_client::anchor_lang::Key;
 use anyhow::Result;
 use solana_sdk::pubkey::Pubkey;
 use fixed::types::I80F48;
@@ -23,15 +24,18 @@ pub fn create_new_fund<C: Deref<Target = impl Signer> + Clone>(
 ) -> Result<Signature> {
     let program = client.program(fund_management_program::ID)?;
 
-    let fund = Keypair::new();
+    let (fund, bump) = Pubkey::find_program_address(
+        &[signer_wallet.pubkey().as_ref(),
+        portfolio_manager.as_ref()],
+        &fund_management_program::ID
+    );
 
     // Build and send a transaction.
     let sig = program
         .request()
         .signer(&signer_wallet)
-        .signer(&fund)
         .accounts(fund_management_program::accounts::Initialize {
-            fund: fund.pubkey(),
+            fund: fund.key(),
             administrator: signer_wallet.pubkey(),
             system_program: system_program::ID,
         })
