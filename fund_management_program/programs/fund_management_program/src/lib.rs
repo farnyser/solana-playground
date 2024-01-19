@@ -27,13 +27,13 @@ pub mod fund_management_program {
     }
 
     // Trader deposit back profit / fund when needed
-    pub fn portfolio_manager_deposit(ctx: Context<PortfolioManagerAccount>) -> Result<()> {
-        deposit(ctx)
+    pub fn portfolio_manager_deposit(ctx: Context<PortfolioManagerAccount>, amount: u64) -> Result<()> {
+        deposit(ctx, amount)
     }
 
     // Trader withdraw amount for trading
-    pub fn portfolio_manager_withdraw(ctx: Context<PortfolioManagerAccount>) -> Result<()> {
-        withdraw(ctx)
+    pub fn portfolio_manager_withdraw(ctx: Context<PortfolioManagerAccount>, amount: u64) -> Result<()> {
+        withdraw(ctx, amount)
     }
 
     // Set fund value -> new token will be minted using this value

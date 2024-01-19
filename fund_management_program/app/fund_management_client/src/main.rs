@@ -50,21 +50,21 @@ enum Commands {
         /// The net asset valuation
         nav: f64,
     },
-    /// Deposit asset into the fund vault
-    Deposit {
+    /// Portfolio manager deposit asset into the fund vault
+    PmDeposit {
         /// The fund pubkey
         #[arg(value_parser = clap::value_parser!(model::pubkey_cli::PubkeyCli))]
         fund: model::pubkey_cli::PubkeyCli,
         /// Amount to deposit (in fund base ccy)
-        amount: f64,
+        amount: u64,
     },
-    /// Withdraw asset from the fund vault
-    Withdraw {
+    /// Portfolio manager withdraw asset from the fund vault
+    PmWithdraw {
         /// The fund pubkey
         #[arg(value_parser = clap::value_parser!(model::pubkey_cli::PubkeyCli))]
         fund: model::pubkey_cli::PubkeyCli,
         /// Amount to withdraw (in fund base ccy)
-        amount: f64,
+        amount: u64,
     },
 }
 
@@ -105,11 +105,21 @@ fn main() {
             );
             set_fund_nav(&client, &payer, fund.0, nav)
         },
-        Commands::Deposit { fund, amount } => {
-            Result::<Signature>::Err(Error::msg("TODO"))
+        Commands::PmDeposit { fund, amount } => {
+            println!(
+                "Deposit {} into fund {}",
+                amount,
+                fund.0,
+            );
+            deposit_into_fund(&client, &payer, fund.0, amount)
         },
-        Commands::Withdraw { fund, amount } => {
-            Result::<Signature>::Err(Error::msg("TODO"))
+        Commands::PmWithdraw { fund, amount } => {
+            println!(
+                "Withdraw {} from fund {}",
+                amount,
+                fund.0,
+            );
+            withdraw_from_fund(&client, &payer, fund.0, amount)
         },
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachable!()
     };

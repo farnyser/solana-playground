@@ -68,3 +68,53 @@ pub fn set_fund_nav<C: Deref<Target = impl Signer> + Clone>(
 
     Ok(sig)
 }
+
+pub fn deposit_into_fund<C: Deref<Target = impl Signer> + Clone>(
+    client: &Client<C>,
+    signer_wallet: &Keypair,
+    fund: Pubkey,
+    amount: u64
+) -> Result<Signature> {
+    let program = client.program(fund_management_program::ID)?;
+
+    // Build and send a transaction.
+    let sig = program
+        .request()
+        .signer(&signer_wallet)
+        .accounts(fund_management_program::accounts::PortfolioManagerAccount {
+            fund: fund,
+            manager: signer_wallet.pubkey(),
+            system_program: system_program::ID
+        })
+        .args(fund_management_program::instruction::PortfolioManagerDeposit {
+            amount: amount
+        })
+        .send()?;
+
+    Ok(sig)
+}
+
+pub fn withdraw_from_fund<C: Deref<Target = impl Signer> + Clone>(
+    client: &Client<C>,
+    signer_wallet: &Keypair,
+    fund: Pubkey,
+    amount: u64
+) -> Result<Signature> {
+    let program = client.program(fund_management_program::ID)?;
+
+    // Build and send a transaction.
+    let sig = program
+        .request()
+        .signer(&signer_wallet)
+        .accounts(fund_management_program::accounts::PortfolioManagerAccount {
+            fund: fund,
+            manager: signer_wallet.pubkey(),
+            system_program: system_program::ID
+        })
+        .args(fund_management_program::instruction::PortfolioManagerWithdraw {
+            amount: amount
+        })
+        .send()?;
+
+    Ok(sig)
+}
